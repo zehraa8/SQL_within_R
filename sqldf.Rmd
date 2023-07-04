@@ -1,0 +1,207 @@
+---
+title: "SQL in R"
+author: "Zehra Cebeci"
+date: "May 2023"
+output:
+  html_document: 
+    code_folding: show
+    highlight: zenburn
+    theme: flatly
+    toc: yes
+    fontsize: 14pt
+    fontfamily: montserrat
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+## Introduction
+
+This project presents an R Markdown report that demonstrates the execution of SQL commands through the R interface using the sqldf package. The primary objective of this study is to provide a comprehensive understanding of how basic SQL commands can be utilized within the R programming language.
+
+SQL (Structured Query Language) is a powerful and widely used language for managing and manipulating relational databases. By incorporating SQL commands into R, data analysts and researchers can leverage the benefits of both languages, combining the data processing capabilities of R with the querying capabilities of SQL.
+
+The sqldf package in R enables seamless integration between R and SQL, allowing users to write SQL queries within their R code to retrieve, filter, transform, and analyze data stored in various database systems. This project aims to demonstrate the versatility and functionality of SQL commands within the R environment.
+
+Throughout this report, we will explore and illustrate the usage of basic SQL commands, such as SELECT, FROM, WHERE, JOIN, and more. By showcasing practical examples and explanations, we will emphasize how SQL commands can be leveraged to perform common data operations, including data selection, filtering, aggregation, and joining.
+
+Whether you are an R programmer looking to expand your data manipulation capabilities or a SQL user interested in harnessing R's analytical and visualization tools, this project will serve as a valuable resource to understand the fundamentals of executing SQL commands within R using the sqldf package.
+
+Let's dive into the world of SQL within R and explore the possibilities of integrating these two powerful languages for efficient data analysis and management.
+
+
+# sqldf Package
+
+<b>sqldf</b> is an R package for executing SQL statements in R dataframes. First, it is need to be installed [sqldf package](https://cran.r-project.org/web/packages/sqldf/index.html) that is used for runing SQL statements in R, then it is libraried.
+```{r pressure, echo=TRUE}
+library(sqldf)
+citation("sqldf")
+```
+<br>
+<br>
+The data frame named "Studentdata" from "LearnBayes" package contains answers of questions given to a large number of students in introductory statistics classes as 657 observations on the following 11 variables.It is continued with the sample containing the first 25 lines of data for convenience.
+```{r}
+library(LearnBayes)
+data(studentdata)
+studentdata<-studentdata[1:25,]
+head(studentdata)
+```
+
+# SQL Commands
+
+## SELECT
+
+SELECT statement is used to select data from a database. 
+In following example, "Student" and "Height" columns are selected from "Studentdata" table:
+```{r}
+sqldf("SELECT Student, Height FROM studentdata")
+```
+<br>
+<br>
+Following statement can be used to select all columns. <i>SELECT * FROM data </i> means <b>"all columns, everything"</b>. 
+```{r}
+sqldf("SELECT * FROM studentdata")
+```
+<br>
+<br>
+<i>SELECT DISTINCT</i> removes duplicate values in the selected column and return only different ones.
+```{r}
+sqldf("SELECT DISTINCT Drink FROM studentdata")
+```
+
+## WHERE
+WHERE clause is used to filter rows based on specified conditions.In following example, it gives all female students.
+```{r}
+sqldf("SELECT * FROM studentdata WHERE Gender='female'")
+```
+<br>
+<br>
+The WHERE NOT clause can be used to filter external of the conditions. In this example, all non-female students come.
+```{r}
+sqldf("SELECT * FROM studentdata WHERE NOT Gender='female'")
+```
+<br>
+<br>
+When the WHERE command is combined with and , records satisfying both conditions are obtained.Female students preferring a milk drink are displayed in the example.
+```{r}
+sqldf("SELECT Student, Gender, Drink FROM studentdata WHERE Gender='female' AND Drink='milk'")
+```
+<br>
+<br>
+When the WHERE command is used with or, it is sufficient to meet at least one of the conditions.Accordingly, all students who prefer milk or water are obtained in the example.
+```{r}
+sqldf("SELECT Student,Gender,Drink FROM studentdata WHERE Drink='milk' OR Drink='water'")
+```
+<br>
+<br>
+Similarly, the *AND* and *OR* operators can be used together. Thereby, the example gives all female students who favor water or milk.
+```{r}
+sqldf("SELECT Student,Gender,Drink FROM studentdata WHERE Gender='female' AND (Drink='milk' OR
+      Drink='water')")
+```
+
+## GROUP BY
+
+Finding summary rows, such as "find the number of consumers in each country," is done with the GROUP BY statement, which groups rows with the similar values.
+
+The COUNT(), MAX(), MIN(), SUM(), and AVG() aggregate functions are frequently used with the GROUP BY statement to group the rows by one or more columns.
+
+```{r}
+sqldf("SELECT Gender,AVG(Height) FROM studentdata GROUP BY Gender")
+```
+
+```{r}
+sqldf("SELECT Drink,COUNT(Drink) FROM studentdata GROUP BY Drink")
+```
+
+## ORDER BY..ASC|DESC
+<br>
+The ASCENDING order of the "Height" column is used to select "Student" and "Height" from the "studentdata" table in the SQL statement that follows:
+```{r}
+sqldf("SELECT Student, Height
+      FROM studentdata 
+      ORDER BY Height ASC")
+```
+<br>
+<br>
+The DESCENDING order of the "Height" column is used to select "Student" and "Height" from the "studentdata" table in the SQL statement that follows:
+```{r}
+sqldf("SELECT Student, Height
+      FROM studentdata 
+      ORDER BY Height DESC")
+```
+
+
+## JOINS
+
+
+```{r, echo=FALSE}
+knitr::include_graphics("joins.png")
+```
+
+There are different types of joins available in SQL, including inner join, left join, right join, and full outer join. Let's go through each type of join and understand how they work.
+<br>
+
+```{r}
+table1<-sqldf("SELECT Student,Height FROM studentdata WHERE Gender='male' OR Drink='water'")
+table2<-sqldf("SELECT Student, Gender FROM studentdata WHERE Drink='milk'")
+
+```
+
+```{r}
+table1
+table2
+```
+For working with joins , first it is created two tables from main "studentdata". These are table 1 that includes male students and students drink water, while table 2 includes students drink milk. Let' join these tables.
+
+### Inner Join
+The inner join returns only the matching rows from both tables based on a specified condition. 
+
+```{r}
+sqldf("SELECT *
+FROM table1
+INNER JOIN table2
+ON table1.Student = table2.Student;")
+```
+
+### Left Join
+The left join returns all rows from the left table (table1) and the matching rows from the right table (table2). 
+
+```{r}
+sqldf("SELECT *
+FROM table1
+LEFT JOIN table2
+ON table1.Student = table2.Student;")
+```
+
+### Rigth Join
+The right join returns all rows from the right table (table2) and the matching rows from the left table (table1). 
+```{r}
+sqldf("SELECT *
+FROM table1
+RIGHT JOIN table2
+ON table1.Student = table2.Student;")
+```
+
+### Full Outer Join
+The full outer join returns all rows from both tables, regardless of whether they have matches or not. If there are no matches, NULL values are returned for the columns of the non-matching table. 
+```{r}
+sqldf("SELECT *
+FROM table1
+FULL OUTER JOIN table2
+ON table1.Student = table2.Student;")
+
+```
+<br>
+The End :) 
+
+# References 
+
+[1]  [sqldf package](https://cran.r-project.org/web/packages/sqldf/index.html)
+<br>
+[2]  [W3School](https://www.w3schools.com/sql/default.asp)
